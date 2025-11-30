@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Internet Archive Movies</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #FFE047;
+            --primary-hover: #FFD700;
+            --primary-glow: rgba(255, 224, 71, 0.3);
+            --primary-soft: rgba(255, 224, 71, 0.12);
+            --surface: #1C1C1E;
+            --surface-dim: #141416;
+            --surface-container: #252528;
+            --surface-container-high: #2C2C30;
+            --on-surface: #E6E1E5;
+            --on-surface-variant: #CAC4D0;
+            --outline: #49454F;
+            --outline-variant: #3A3A3C;
+            --radius-xs: 8px;
+            --radius-sm: 12px;
+            --radius-md: 16px;
+            --radius-lg: 24px;
+            --radius-xl: 28px;
+            --radius-full: 9999px;
+        }
+
+        body {
+            font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--surface-dim);
+            color: var(--on-surface);
+            height: 100vh;
+            overflow: hidden;
+            letter-spacing: 0.01em;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+            width: 100%;
+        }
+
+        /* Left Panel - Dashboard */
+        .dashboard {
+            flex: 1;
+            background: var(--surface-dim);
+            overflow-y: auto;
+            padding: 48px;
+        }
+
+        .dashboard-header {
+            margin-bottom: 48px;
+            transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .dashboard-header h1 {
+            font-size: 56px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--on-surface);
+            letter-spacing: -0.02em;
+            transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .dashboard-header p {
+            font-size: 18px;
+            font-weight: 400;
+            color: var(--on-surface-variant);
+            transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .dashboard-description {
+            font-size: 15px;
+            line-height: 1.7;
+            color: var(--on-surface-variant);
+            margin-top: 16px;
+            max-width: 800px;
+            opacity: 0;
+            animation: fadeIn 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.3s both;
+        }
+
+        .content-area {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 24px;
+        }
+
+        .welcome-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 120px 24px;
+            animation: fadeInUp 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+
+        .welcome-state .logo {
+            font-size: 88px;
+            margin-bottom: 32px;
+            animation: float 4s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-12px);
+            }
+        }
+
+        .welcome-state h2 {
+            font-size: 36px;
+            font-weight: 500;
+            margin-bottom: 16px;
+            color: var(--on-surface);
+            letter-spacing: -0.01em;
+            opacity: 0;
+            animation: fadeIn 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
+        }
+
+        .welcome-state p {
+            font-size: 18px;
+            font-weight: 400;
+            color: var(--on-surface-variant);
+            opacity: 0;
+            animation: fadeIn 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.4s both;
+        }
+
+        .movie-card {
+            background: var(--surface-container);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+            cursor: pointer;
+            animation: fadeInUp 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+            will-change: transform, opacity;
+            border: 1px solid var(--outline-variant);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .movie-card:hover {
+            transform: translateY(-6px) scale(1.01);
+            box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
+            border-color: var(--primary-glow);
+        }
+
+        .movie-thumbnail {
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: linear-gradient(135deg, var(--surface-container-high) 0%, var(--surface-container) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .movie-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            inset: 0;
+            transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .movie-card:hover .movie-thumbnail img {
+            transform: scale(1.06);
+        }
+
+        .movie-thumbnail .fallback-icon {
+            position: relative;
+            z-index: 1;
+            transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .movie-card:hover .movie-thumbnail .fallback-icon {
+            transform: scale(1.08);
+        }
+
+        .movie-thumbnail::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(0, 0, 0, 0) 40%, rgba(0, 0, 0, 0.6) 100%);
+            opacity: 0;
+            transition: opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .movie-card:hover .movie-thumbnail::after {
+            opacity: 1;
+        }
+
+        .play-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+            z-index: 2;
+            transform: scale(0.85);
+        }
+
+        .movie-card:hover .play-overlay {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .play-icon {
+            width: 60px;
+            height: 60px;
+            background: var(--primary-color);
+            border-radius: var(--radius-full);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+            backdrop-filter: blur(12px);
+            box-shadow: 0 8px 24px rgba(255, 224, 71, 0.3);
+        }
+
+        .play-icon:hover {
+            transform: scale(1.08);
+            box-shadow: 0 12px 32px rgba(255, 224, 71, 0.4);
+        }
+
+        .play-icon svg {
+            color: var(--surface-dim);
+        }
+
+        .movie-info {
+            padding: 20px;
+            transform: translateY(0);
+            transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .movie-card:hover .movie-info {
+            transform: translateY(-2px);
+        }
+
+        .platform-tag {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: var(--radius-full);
+            font-size: 11px;
+            font-weight: 500;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .movie-card:hover .platform-tag {
+            transform: translateX(2px);
+        }
+
+        .platform-tag.ia {
+            background: rgba(102, 126, 234, 0.15);
+            color: #8B9EF5;
+        }
+
+        .platform-tag.yt {
+            background: rgba(255, 0, 0, 0.12);
+            color: #FF6B6B;
+        }
+
+        .movie-title {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--on-surface);
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            letter-spacing: -0.01em;
+        }
+
+        .movie-description {
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--on-surface-variant);
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .movie-player-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 48px;
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+            backdrop-filter: blur(0px);
+        }
+
+        .movie-player-modal.active {
+            display: flex;
+            opacity: 1;
+            background: rgba(0, 0, 0, 0.92);
+            backdrop-filter: blur(24px);
+        }
+
+        .player-container {
+            width: 100%;
+            max-width: 1200px;
+            background: var(--surface-dim);
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+            position: relative;
+            transform: scale(0.92) translateY(24px);
+            opacity: 0;
+            transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+            box-shadow: 0 32px 64px rgba(0, 0, 0, 0.5);
+        }
+
+        .movie-player-modal.active .player-container {
+            transform: scale(1) translateY(0);
+            opacity: 1;
+        }
+
+        .close-player {
+            position: absolute;
+            top: -52px;
+            right: 0;
+            background: var(--surface-container);
+            border: none;
+            color: var(--on-surface);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 12px;
+            z-index: 1001;
+            border-radius: var(--radius-full);
+            transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+            opacity: 0.8;
+        }
+
+        .close-player:hover {
+            opacity: 1;
+            background: var(--primary-color);
+            color: var(--surface-dim);
+            transform: rotate(90deg) scale(1.05);
+        }
+
+        .movie-player {
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: #000;
+        }
+
+        .movie-player iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Right Panel - Chat */
+        .chat-panel {
+            width: 30%;
+            min-width: 360px;
+            background: var(--surface);
+            border-left: 1px solid var(--outline-variant);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            padding: 40px 28px 32px;
+            border-bottom: 1px solid var(--outline-variant);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            background: linear-gradient(180deg, var(--surface-container) 0%, var(--surface) 100%);
+        }
+
+        .chat-header .brand-logo {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .chat-header .brand-logo img {
+            width: 72px;
+            height: 72px;
+            filter: drop-shadow(0 4px 12px var(--primary-glow));
+        }
+
+        .chat-header h2 {
+            font-size: 26px;
+            font-weight: 500;
+            color: var(--on-surface);
+            margin-bottom: 6px;
+            letter-spacing: -0.01em;
+        }
+
+        .chat-header p {
+            font-size: 14px;
+            font-weight: 400;
+            color: var(--on-surface-variant);
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .message {
+            padding: 16px 20px;
+            border-radius: var(--radius-xl);
+            max-width: 88%;
+            word-wrap: break-word;
+            animation: breatheIn 1.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+            opacity: 0;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        @keyframes breatheIn {
+            0% {
+                opacity: 0;
+                transform: translateY(16px) scale(0.97);
+            }
+            50% {
+                opacity: 0.6;
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background: var(--primary-color);
+            color: var(--surface-dim);
+            font-weight: 500;
+            animation-delay: 0.05s;
+            border-bottom-right-radius: var(--radius-xs);
+        }
+
+        .message.assistant {
+            align-self: flex-start;
+            background: var(--surface-container-high);
+            color: var(--on-surface);
+            animation-delay: 0.1s;
+            border-bottom-left-radius: var(--radius-xs);
+        }
+
+        .chat-input-container {
+            padding: 24px;
+            border-top: 1px solid var(--outline-variant);
+            background: var(--surface);
+        }
+
+        .chat-input-wrapper {
+            position: relative;
+        }
+
+        .chat-input {
+            width: 100%;
+            padding: 16px 56px 16px 20px;
+            background: var(--surface-container);
+            border: 2px solid transparent;
+            border-radius: var(--radius-xl);
+            color: var(--on-surface);
+            font-size: 15px;
+            font-family: inherit;
+            outline: none;
+            transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .chat-input:focus {
+            border-color: var(--primary-color);
+            background: var(--surface-container-high);
+            box-shadow: 0 0 0 4px var(--primary-soft);
+        }
+
+        .chat-input::placeholder {
+            color: var(--on-surface-variant);
+            opacity: 0.6;
+        }
+
+        .send-button {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--primary-color);
+            border: none;
+            border-radius: var(--radius-full);
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+            color: var(--surface-dim);
+        }
+
+        .send-button:hover:not(:disabled) {
+            background: var(--primary-hover);
+            transform: translateY(-50%) scale(1.06);
+            box-shadow: 0 4px 16px var(--primary-glow);
+        }
+
+        .send-button:active:not(:disabled) {
+            transform: translateY(-50%) scale(0.95);
+        }
+
+        .send-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .send-button svg {
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .send-button:hover:not(:disabled) svg {
+            transform: translateX(2px);
+        }
+
+        .loading {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 80px 24px;
+            color: var(--on-surface-variant);
+            animation: fadeInUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 44px;
+            height: 44px;
+            border: 3px solid var(--surface-container-high);
+            border-top-color: var(--primary-color);
+            border-radius: var(--radius-full);
+            animation: spin 1s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            margin-top: 24px;
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--on-surface);
+        }
+
+        .thinking-process {
+            margin-top: 20px;
+            min-height: 24px;
+            position: relative;
+        }
+
+        .thinking-step {
+            font-size: 14px;
+            color: var(--on-surface-variant);
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .thinking-step.active {
+            opacity: 1;
+        }
+
+        @keyframes fadeInSlide {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.1);
+                opacity: 0.8;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .typing-indicator {
+            padding: 16px 20px;
+            border-radius: var(--radius-xl);
+            border-bottom-left-radius: var(--radius-xs);
+            background: var(--surface-container-high);
+            color: var(--on-surface-variant);
+            align-self: flex-start;
+            max-width: 88%;
+        }
+
+        .typing-cursor {
+            display: inline-block;
+            width: 2px;
+            height: 1em;
+            background-color: var(--on-surface);
+            margin-left: 2px;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 49% {
+                opacity: 1;
+            }
+            50%, 100% {
+                opacity: 0;
+            }
+        }
+
+        .typing-dots {
+            display: inline-flex;
+            gap: 6px;
+        }
+
+        .typing-dots span {
+            width: 8px;
+            height: 8px;
+            background: var(--primary-color);
+            border-radius: var(--radius-full);
+            animation: typing 1.6s infinite;
+            opacity: 0.4;
+        }
+
+        .typing-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                opacity: 0.3;
+                transform: translateY(0) scale(1);
+            }
+            30% {
+                opacity: 1;
+                transform: translateY(-5px) scale(1.1);
+            }
+        }
+
+        /* Hide scrollbar */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+
+        * {
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE and Edge */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Left Panel - Dashboard -->
+        <div class="dashboard">
+            <div class="dashboard-header">
+                <h1 id="dashboardTitle">Discover</h1>
+                <p id="dashboardSubtitle">Curated movies from the archive</p>
+                <div class="dashboard-description" id="dashboardDescription"></div>
+            </div>
+
+            <div class="content-area" id="contentArea">
+                <div class="welcome-state">
+                    <div class="logo">🎬</div>
+                    <h2>What's on your mind today?</h2>
+                    <p>Tell me about your mood, your day, or what you're curious about →</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel - Chat -->
+        <div class="chat-panel">
+            <div class="chat-header">
+                <div class="brand-logo">
+                    <img src="logo 3.svg" alt="Cineco">
+                </div>
+                <h2>Cineco</h2>
+                <p>Your personal curator</p>
+            </div>
+
+            <div class="chat-messages" id="chatMessages">
+                <!-- Messages will appear here -->
+            </div>
+
+            <div class="chat-input-container">
+                <div class="chat-input-wrapper">
+                    <input
+                        type="text"
+                        class="chat-input"
+                        id="chatInput"
+                        placeholder="I'm feeling nostalgic today..."
+                        autocomplete="off"
+                    >
+                    <button class="send-button" id="sendButton">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Movie Player Modal -->
+    <div class="movie-player-modal" id="playerModal">
+        <div class="player-container">
+            <button class="close-player" onclick="closePlayer()">✕</button>
+            <div class="movie-player" id="moviePlayer"></div>
+        </div>
+    </div>
+
+    <script>
+        const contentArea = document.getElementById('contentArea');
+        const chatMessages = document.getElementById('chatMessages');
+        const chatInput = document.getElementById('chatInput');
+        const sendButton = document.getElementById('sendButton');
+        const dashboardTitle = document.getElementById('dashboardTitle');
+        const dashboardSubtitle = document.getElementById('dashboardSubtitle');
+        const dashboardDescription = document.getElementById('dashboardDescription');
+        const playerModal = document.getElementById('playerModal');
+        const moviePlayer = document.getElementById('moviePlayer');
+
+        // Store conversation history
+        let conversationHistory = [];
+
+        function addMessage(text, type) {
+            // All messages appear immediately
+            const message = document.createElement('div');
+            message.className = `message ${type}`;
+            message.textContent = text;
+            chatMessages.appendChild(message);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            const typing = document.createElement('div');
+            typing.className = 'typing-indicator';
+            typing.id = 'typingIndicator';
+            typing.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
+            chatMessages.appendChild(typing);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const typing = document.getElementById('typingIndicator');
+            if (typing) typing.remove();
+        }
+
+        const thinkingSteps = [
+            'Reading between the lines',
+            'Wandering through the archive',
+            'Weighing each discovery',
+            'Listening for echoes',
+            'Gathering what resonates'
+        ];
+
+        let thinkingInterval;
+
+        function showLoading() {
+            contentArea.innerHTML = `
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <div class="loading-text">Finding movies...</div>
+                    <div class="thinking-process" id="thinkingProcess"></div>
+                </div>
+            `;
+
+            const thinkingProcess = document.getElementById('thinkingProcess');
+            let currentStep = 0;
+
+            // Create all step elements
+            thinkingSteps.forEach((step) => {
+                const stepEl = document.createElement('div');
+                stepEl.className = 'thinking-step';
+                stepEl.textContent = step;
+                thinkingProcess.appendChild(stepEl);
+            });
+
+            const steps = document.querySelectorAll('.thinking-step');
+
+            // Show first step
+            steps[0].classList.add('active');
+
+            // Cycle through steps with fade in/out
+            thinkingInterval = setInterval(() => {
+                // Fade out current step
+                steps[currentStep].classList.remove('active');
+
+                // Wait for fade out to complete, then fade in next step
+                setTimeout(() => {
+                    // Move to next step
+                    currentStep = (currentStep + 1) % steps.length;
+
+                    // Fade in next step
+                    steps[currentStep].classList.add('active');
+                }, 400);
+            }, 2500);
+        }
+
+        function clearLoading() {
+            if (thinkingInterval) {
+                clearInterval(thinkingInterval);
+                thinkingInterval = null;
+            }
+        }
+
+        function generateCuratedTitle(query) {
+            // Convert to lowercase for easier matching
+            const lowerQuery = query.toLowerCase();
+
+            // Common patterns and their curated titles
+            const patterns = [
+                { match: /old|classic|vintage|retro/i, theme: 'Classic' },
+                { match: /new|recent|latest|modern/i, theme: 'Modern' },
+                { match: /action|adventure/i, theme: 'Action & Adventure' },
+                { match: /comedy|funny|laugh/i, theme: 'Comedy' },
+                { match: /horror|scary|thriller/i, theme: 'Thriller & Horror' },
+                { match: /romance|love/i, theme: 'Romance' },
+                { match: /sci-?fi|science fiction|space/i, theme: 'Science Fiction' },
+                { match: /documentary|docs/i, theme: 'Documentary' },
+                { match: /drama/i, theme: 'Drama' },
+                { match: /animation|animated/i, theme: 'Animation' },
+                { match: /nostalgic|nostalgia/i, theme: 'Nostalgic' },
+                { match: /sad|cry|emotional/i, theme: 'Emotional' },
+                { match: /happy|uplifting|feel-?good/i, theme: 'Feel-Good' },
+                { match: /dark|noir|gritty/i, theme: 'Dark' },
+            ];
+
+            // Find matching themes
+            let themes = [];
+            patterns.forEach(pattern => {
+                if (pattern.match.test(lowerQuery)) {
+                    themes.push(pattern.theme);
+                }
+            });
+
+            // Extract specific subjects (nouns)
+            const subjects = [];
+
+            // Look for specific nouns/subjects
+            const subjectPatterns = [
+                { word: /cat|feline/i, subject: 'Cats' },
+                { word: /dog|canine/i, subject: 'Dogs' },
+                { word: /war|battle/i, subject: 'War' },
+                { word: /ocean|sea/i, subject: 'Ocean' },
+                { word: /city|urban/i, subject: 'City Life' },
+                { word: /nature|wildlife/i, subject: 'Nature' },
+                { word: /music|musical/i, subject: 'Music' },
+                { word: /art|artist/i, subject: 'Art' },
+                { word: /crime|detective/i, subject: 'Crime' },
+                { word: /family/i, subject: 'Family' },
+                { word: /children|kids/i, subject: 'Children' },
+            ];
+
+            subjectPatterns.forEach(pattern => {
+                if (pattern.word.test(lowerQuery)) {
+                    subjects.push(pattern.subject);
+                }
+            });
+
+            // Build the title
+            let title = '';
+
+            if (themes.length > 0 && subjects.length > 0) {
+                // Combine theme + subject (e.g., "Classic Cat Films")
+                title = `${themes[0]} ${subjects[0]} Films`;
+            } else if (subjects.length > 0) {
+                // Just subject (e.g., "Cat Films")
+                title = `${subjects[0]} Films`;
+            } else if (themes.length > 0) {
+                // Just theme (e.g., "Classic Cinema")
+                title = `${themes[0]} Cinema`;
+            } else {
+                // Fallback: capitalize first few words of query
+                const words = query.split(/\s+/).slice(0, 4);
+                title = words.map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+            }
+
+            return title;
+        }
+
+        function displayMovies(movies, query, description = '') {
+            clearLoading();
+
+            if (!movies || movies.length === 0) {
+                contentArea.innerHTML = `
+                    <div class="welcome-state">
+                        <div class="logo">🤷</div>
+                        <h2>No movies found</h2>
+                        <p>Try a different search!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            dashboardTitle.textContent = generateCuratedTitle(query);
+            dashboardSubtitle.textContent = `Found ${movies.length} results`;
+            dashboardDescription.textContent = ''; // No description text on dashboard
+
+            contentArea.innerHTML = '';
+
+            movies.forEach((movie, index) => {
+                const card = document.createElement('div');
+                card.className = 'movie-card';
+                card.style.animationDelay = `${index * 0.05}s`;
+                card.onclick = () => playMovie(movie.identifier, movie.platform_short);
+
+                const description = movie.description && movie.description !== 'No description available'
+                    ? movie.description
+                    : 'Explore this curated content';
+
+                const platformClass = movie.platform_short === 'YT' ? 'yt' : 'ia';
+
+                // Only show thumbnail image, no fallback icon
+                const thumbnailHTML = movie.thumbnail
+                    ? `<img src="${movie.thumbnail}" alt="${movie.title}" loading="lazy">`
+                    : '';
+
+                card.innerHTML = `
+                    <div class="movie-thumbnail">
+                        ${thumbnailHTML}
+                        <div class="play-overlay">
+                            <div class="play-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="#141414">
+                                    <polygon points="8 5 19 12 8 19 8 5"></polygon>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="movie-info">
+                        <span class="platform-tag ${platformClass}">${movie.platform_short}</span>
+                        <div class="movie-title">${movie.title || 'Untitled'}</div>
+                        <div class="movie-description">${description}</div>
+                    </div>
+                `;
+
+                contentArea.appendChild(card);
+            });
+        }
+
+        window.playMovie = function(identifier, platform) {
+            let embedUrl;
+
+            if (platform === 'YT') {
+                embedUrl = `https://www.youtube.com/embed/${identifier}`;
+            } else {
+                embedUrl = `https://archive.org/embed/${identifier}`;
+            }
+
+            moviePlayer.innerHTML = `
+                <iframe
+                    src="${embedUrl}"
+                    allow="fullscreen; accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen>
+                </iframe>
+            `;
+            playerModal.classList.add('active');
+        };
+
+        window.closePlayer = function() {
+            playerModal.classList.remove('active');
+            moviePlayer.innerHTML = '';
+        };
+
+        // Close player on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closePlayer();
+            }
+        });
+
+        // Close player when clicking outside
+        playerModal.addEventListener('click', (e) => {
+            if (e.target === playerModal) {
+                closePlayer();
+            }
+        });
+
+        async function sendMessage() {
+            const message = chatInput.value.trim();
+            if (!message) return;
+
+            // Add user message to chat and history
+            addMessage(message, 'user');
+            conversationHistory.push({ role: 'user', content: message });
+            chatInput.value = '';
+            sendButton.disabled = true;
+
+            // Show typing indicator
+            showTypingIndicator();
+            showLoading();
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message,
+                        history: conversationHistory
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to load movies');
+                }
+
+                const data = await response.json();
+
+                removeTypingIndicator();
+                clearLoading();
+
+                if (data.data && Array.isArray(data.data)) {
+                    displayMovies(data.data, message, data.response);
+                    if (data.response) {
+                        addMessage(data.response, 'assistant');
+                        conversationHistory.push({ role: 'assistant', content: data.response });
+                    }
+                } else {
+                    if (data.response) {
+                        addMessage(data.response, 'assistant');
+                        conversationHistory.push({ role: 'assistant', content: data.response });
+                    } else {
+                        addMessage('No results found.', 'assistant');
+                        conversationHistory.push({ role: 'assistant', content: 'No results found.' });
+                    }
+                    contentArea.innerHTML = `
+                        <div class="welcome-state">
+                            <div class="logo">💬</div>
+                            <h2>Keep chatting!</h2>
+                            <p>Try asking for a different genre</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                removeTypingIndicator();
+                clearLoading();
+                const errorMsg = `Error: ${error.message}`;
+                addMessage(errorMsg, 'assistant');
+                conversationHistory.push({ role: 'assistant', content: errorMsg });
+                contentArea.innerHTML = `
+                    <div class="welcome-state">
+                        <div class="logo">❌</div>
+                        <h2>Something went wrong</h2>
+                        <p>Please try again</p>
+                    </div>
+                `;
+            } finally {
+                sendButton.disabled = false;
+                chatInput.focus();
+            }
+        }
+
+        sendButton.addEventListener('click', sendMessage);
+
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Auto-focus on input
+        chatInput.focus();
+
+        // Cineco greets the user on page load
+        function greetUser() {
+            setTimeout(() => {
+                addMessage("Hi! I'm Cineco, your personal movie curator.", 'assistant');
+                setTimeout(() => {
+                    addMessage("What's on your mind today?", 'assistant');
+                }, 1200);
+            }, 800);
+        }
+
+        // Start with Cineco's greeting
+        greetUser();
+    </script>
+</body>
+</html>
